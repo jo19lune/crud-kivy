@@ -50,3 +50,12 @@ class ItemModel:
                     item["image"] = image_path
                 break
         self.save_items(items)
+
+    def search_items(self, query):
+        items = self.load_items()
+        if not query:
+            return items
+        query = query.lower()
+        return [item for item in items 
+                if query in item["name"].lower() or query in item["desc"].lower()]
+    
