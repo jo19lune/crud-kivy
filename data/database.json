@@ -1,0 +1,14 @@
+[
+    {
+        "id": "2b69437e-94a7-4868-a667-57b3a7e82bec",
+        "name": "poireaux",
+        "desc": "fruit",
+        "image": "assets/logo.png"
+    },
+    {
+        "id": "6a91e607-03b2-42bc-bc3a-62dc39cd6651",
+        "name": "march",
+        "desc": "action",
+        "image": "assets/logo.png"
+    }
+]
