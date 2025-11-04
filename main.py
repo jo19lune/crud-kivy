@@ -16,13 +16,22 @@ class ImageDialog(MDBoxLayout):
     """Boîte de dialogue pour choisir une image"""
     pass
 
-class EditDialog(MDBoxLayout):
-    """Boîte de dialogue pour modifier un item"""
+class EditDialogContent(MDBoxLayout):
+    """Contenu de la boîte de dialogue pour modifier un item"""
     def __init__(self, item, **kwargs):
         super().__init__(**kwargs)
-        self.ids.name_input.text = item["name"]
-        self.ids.desc_input.text = item["desc"]
+        self.item = item
         self.selected_image_path = item["image"]
+        
+        # Utiliser Clock pour initialiser après la création des widgets
+        from kivy.clock import Clock
+        Clock.schedule_once(self._init_fields)
+
+    def _init_fields(self, dt):
+        """Initialise les champs après création des widgets"""
+        if hasattr(self, 'ids'):
+            self.ids.name_input.text = self.item["name"]
+            self.ids.desc_input.text = self.item["desc"]
 
 class MainScreen(Screen):
     selected_image_path = StringProperty("assets/logo.png")
@@ -33,6 +42,10 @@ class MainScreen(Screen):
         self.edit_dialog = None
         self.error_dialog = None
 
+    def on_enter(self):
+        """Appelé quand l'écran devient actif - les ids sont maintenant disponibles"""
+        pass
+
     def show_image_dialog(self):
         """Affiche la boîte de dialogue pour choisir une image"""
         if not self.image_dialog:
@@ -40,6 +53,12 @@ class MainScreen(Screen):
                 title="Choisir une image",
                 type="custom",
                 content_cls=ImageDialog(),
+                buttons=[
+                    MDFlatButton(
+                        text="Fermer",
+                        on_release=lambda x: self.image_dialog.dismiss()
+                    )
+                ],
                 size_hint=(0.8, None),
                 height=200
             )
@@ -47,10 +66,15 @@ class MainScreen(Screen):
 
     def open_edit_dialog(self, item):
         """Ouvre la boîte de dialogue pour modifier un item"""
+        # Fermer d'abord les autres dialogues
+        if self.image_dialog:
+            self.image_dialog.dismiss()
+        
+        content = EditDialogContent(item)
         self.edit_dialog = MDDialog(
             title="Modifier l'item",
             type="custom",
-            content_cls=EditDialog(item),
+            content_cls=content,
             buttons=[
                 MDFlatButton(
                     text="Annuler",
@@ -58,18 +82,17 @@ class MainScreen(Screen):
                 ),
                 MDFlatButton(
                     text="Sauvegarder",
-                    on_release=lambda x: self.save_edit_item()
+                    on_release=lambda x: self.save_edit_item(content)
                 )
             ],
             size_hint=(0.8, None),
-            height=400
+            height=300
         )
         self.edit_dialog.open()
 
-    def save_edit_item(self):
+    def save_edit_item(self, content):
         """Sauvegarde les modifications de l'item"""
-        if self.edit_dialog:
-            content = self.edit_dialog.content_cls
+        if content and hasattr(content, 'ids'):
             name = content.ids.name_input.text
             desc = content.ids.desc_input.text
             image_path = content.selected_image_path
@@ -92,6 +115,11 @@ class MainScreen(Screen):
         self.error_dialog.open()
 
     def display_items(self, items, selected_items, view_mode):
+        """Affiche les items selon le mode de vue"""
+        # S'assurer que les ids sont disponibles
+        if not hasattr(self, 'ids'):
+            return
+            
         grid_container = self.ids.grid_container
         list_container = self.ids.list_container
         
@@ -106,20 +134,8 @@ class MainScreen(Screen):
         self.ids.view_mode_switch.active = view_mode == "list"
         
         if view_mode == "grid":
-            # Afficher la grille, cacher la liste
-            list_container.opacity = 0
-            list_container.size_hint_y = 0
-            grid_container.opacity = 1
-            grid_container.size_hint_y = None
-            grid_container.height = grid_container.minimum_height
             self.display_grid_view(items, selected_items, grid_container)
         else:
-            # Afficher la liste, cacher la grille
-            grid_container.opacity = 0
-            grid_container.size_hint_y = 0
-            list_container.opacity = 1
-            list_container.size_hint_y = None
-            list_container.height = list_container.minimum_height
             self.display_list_view(items, selected_items, list_container)
     
     def display_grid_view(self, items, selected_items, container):
@@ -131,59 +147,54 @@ class MainScreen(Screen):
         from kivymd.uix.button import MDIconButton
         
         for item in items:
+            # Créer la carte
             card = MDCard(
                 orientation='vertical',
                 size_hint_y=None,
-                height='240dp',
-                padding='10dp',
-                spacing='10dp',
+                height=240,
+                padding=10,
+                spacing=10,
                 elevation=2
             )
             
-            # Ajouter l'ID de l'item à la carte
-            card.item_id = item["id"]
-            
-            # Couleur de fond si sélectionné
-            if item["id"] in selected_items:
-                card.md_bg_color = [0.8, 0.9, 1, 1]  # Bleu clair
-            
-            # Conteneur pour la checkbox et le bouton d'édition
-            header_layout = MDBoxLayout(adaptive_height=True, spacing=5)
+            # Header avec checkbox et bouton d'édition
+            header = MDBoxLayout(adaptive_height=True, spacing=5)
             
             # Checkbox
             checkbox = MDCheckbox(
                 size_hint=(None, None),
                 size=(24, 24),
-                active=item["id"] in selected_items,
-                on_active=lambda instance, value, item_id=item["id"]: 
-                    self.app.controller.toggle_item_selection(item_id)
+                active=item["id"] in selected_items
             )
-            header_layout.add_widget(checkbox)
+            checkbox.bind(active=lambda instance, value, item_id=item["id"]: 
+                self.app.controller.toggle_item_selection(item_id))
+            header.add_widget(checkbox)
             
             # Bouton d'édition
             edit_btn = MDIconButton(
                 icon="pencil",
                 size_hint=(None, None),
                 size=(24, 24),
-                theme_text_color="Secondary",
-                on_release=lambda instance, item_id=item["id"]: 
-                    self.app.controller.edit_item(item_id)
+                theme_text_color="Secondary"
             )
-            header_layout.add_widget(edit_btn)
+            edit_btn.bind(on_release=lambda instance, item_id=item["id"]: 
+                self.app.controller.edit_item(item_id))
+            header.add_widget(edit_btn)
             
-            card.add_widget(header_layout)
+            card.add_widget(header)
             
             # Image
             img = AsyncImage(
                 source=item.get("image", "assets/logo.png"),
                 size_hint_y=0.6,
-                allow_stretch=True
+                allow_stretch=True,
+                keep_ratio=True
             )
             card.add_widget(img)
             
             # Nom
             name_label = MDLabel(
-                text=item["name"], 
+                text=item["name"],
                 halign="center",
                 bold=True,
                 size_hint_y=0.2
@@ -192,12 +203,16 @@ class MainScreen(Screen):
             
             # Description
             desc_label = MDLabel(
-                text=item["desc"], 
-                halign="center", 
+                text=item["desc"],
+                halign="center",
                 theme_text_color="Secondary",
                 size_hint_y=0.2
             )
             card.add_widget(desc_label)
+            
+            # Style si sélectionné
+            if item["id"] in selected_items:
+                card.md_bg_color = [0.8, 0.9, 1, 1]
             
             container.add_widget(card)
     
@@ -207,67 +222,55 @@ class MainScreen(Screen):
         from kivymd.uix.label import MDLabel
         
         for item in items:
-            # Créer un layout horizontal pour la liste
+            # Créer l'item de liste
             list_item = MDBoxLayout(
                 orientation='horizontal',
                 adaptive_height=True,
                 spacing=10,
-                padding=10
+                padding=10,
+                size_hint_y=None,
+                height=60
             )
-            
-            # Ajouter l'ID de l'item
-            list_item.item_id = item["id"]
-            list_item.text = item["name"]
-            list_item.secondary_text = item["desc"]
             
             # Checkbox
             checkbox = MDCheckbox(
                 size_hint=(None, None),
                 size=(24, 24),
                 pos_hint={'center_y': 0.5},
-                active=item["id"] in selected_items,
-                on_active=lambda instance, value, item_id=item["id"]: 
-                    self.app.controller.toggle_item_selection(item_id)
+                active=item["id"] in selected_items
             )
+            checkbox.bind(active=lambda instance, value, item_id=item["id"]: 
+                self.app.controller.toggle_item_selection(item_id))
             list_item.add_widget(checkbox)
             
-            # Contenu textuel
-            text_layout = MDBoxLayout(
-                orientation='vertical',
-                adaptive_height=True,
-                spacing=5
-            )
+            # Contenu
+            content = MDBoxLayout(orientation='vertical', adaptive_height=True)
             
-            # Nom
             name_label = MDLabel(
                 text=item["name"],
                 theme_text_color="Primary",
                 font_style="Subtitle1",
                 adaptive_height=True
             )
-            text_layout.add_widget(name_label)
+            content.add_widget(name_label)
             
-            # Description
             desc_label = MDLabel(
                 text=item["desc"],
                 theme_text_color="Secondary",
                 font_style="Body2",
                 adaptive_height=True
             )
-            text_layout.add_widget(desc_label)
+            content.add_widget(desc_label)
             
-            list_item.add_widget(text_layout)
+            list_item.add_widget(content)
             
-            # Couleur de fond si sélectionné
+            # Style si sélectionné
             if item["id"] in selected_items:
                 list_item.md_bg_color = [0.8, 0.9, 1, 1]
             
             container.add_widget(list_item)
 
 class MyApp(MDApp):
-    selected_color = ListProperty([0.8, 0.9, 1, 1])
-    normal_color = ListProperty([1, 1, 1, 1])
-    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.controller = None
@@ -279,37 +282,33 @@ class MyApp(MDApp):
         # Créer le ScreenManager
         sm = ScreenManager()
         main_screen = MainScreen(name='main')
-        main_screen.app = self  # Référence à l'app
+        main_screen.app = self
         sm.add_widget(main_screen)
         
-        # Initialiser le controller après la création de la vue
+        # Initialiser le controller
         self.controller = ItemController(main_screen)
         
         return sm
     
     def show_image_dialog(self):
         """Affiche la boîte de dialogue pour choisir une image"""
-        self.root.show_image_dialog()
+        if hasattr(self.root, 'show_image_dialog'):
+            self.root.show_image_dialog()
 
     def open_camera(self):
         """Ouvre la caméra pour prendre une photo"""
-        if self.root.image_dialog:
-            self.root.image_dialog.dismiss()
-        
         ImageManager.take_photo(self.controller.handle_camera_result)
 
     def open_gallery(self):
         """Ouvre la galerie pour choisir une image"""
-        if self.root.image_dialog:
-            self.root.image_dialog.dismiss()
-        
         ImageManager.select_from_gallery(self.controller.handle_gallery_result)
     
     def get_card_color(self, item_id):
         """Retourne la couleur en fonction de la sélection"""
-        if item_id in self.controller.selected_items:
-            return self.selected_color
-        return self.normal_color
+        if hasattr(self, 'controller') and self.controller:
+            if item_id in self.controller.selected_items:
+                return [0.8, 0.9, 1, 1]
+        return [1, 1, 1, 1]
 
 if __name__ == '__main__':
     # Créer les dossiers nécessaires
