@@ -215,22 +215,26 @@ class MainScreen(Screen):
                 card.md_bg_color = [0.8, 0.9, 1, 1]
             
             container.add_widget(card)
-    
+        
     def display_list_view(self, items, selected_items, container):
         from kivymd.uix.boxlayout import MDBoxLayout
         from kivymd.uix.selectioncontrol import MDCheckbox
         from kivymd.uix.label import MDLabel
+        from kivymd.uix.button import MDIconButton
         
         for item in items:
-            # Créer l'item de liste
+            # Créer un layout horizontal pour la liste
             list_item = MDBoxLayout(
                 orientation='horizontal',
                 adaptive_height=True,
                 spacing=10,
                 padding=10,
                 size_hint_y=None,
-                height=60
+                height=80  # Augmenter la hauteur pour accommoder le bouton
             )
+            
+            # Ajouter l'ID de l'item
+            list_item.item_id = item["id"]
             
             # Checkbox
             checkbox = MDCheckbox(
@@ -243,28 +247,47 @@ class MainScreen(Screen):
                 self.app.controller.toggle_item_selection(item_id))
             list_item.add_widget(checkbox)
             
-            # Contenu
-            content = MDBoxLayout(orientation='vertical', adaptive_height=True)
+            # Contenu textuel
+            text_layout = MDBoxLayout(
+                orientation='vertical',
+                adaptive_height=True,
+                spacing=5,
+                size_hint_x=0.7  # Réserver de l'espace pour le bouton
+            )
             
+            # Nom
             name_label = MDLabel(
                 text=item["name"],
                 theme_text_color="Primary",
                 font_style="Subtitle1",
                 adaptive_height=True
             )
-            content.add_widget(name_label)
+            text_layout.add_widget(name_label)
             
+            # Description
             desc_label = MDLabel(
                 text=item["desc"],
                 theme_text_color="Secondary",
                 font_style="Body2",
                 adaptive_height=True
             )
-            content.add_widget(desc_label)
+            text_layout.add_widget(desc_label)
             
-            list_item.add_widget(content)
+            list_item.add_widget(text_layout)
             
-            # Style si sélectionné
+            # BOUTON D'ÉDITION - AJOUTÉ ICI
+            edit_btn = MDIconButton(
+                icon="pencil",
+                size_hint=(None, None),
+                size=(40, 40),
+                theme_text_color="Secondary",
+                pos_hint={'center_y': 0.5}
+            )
+            edit_btn.bind(on_release=lambda instance, item_id=item["id"]: 
+                self.app.controller.edit_item(item_id))
+            list_item.add_widget(edit_btn)
+            
+            # Couleur de fond si sélectionné
             if item["id"] in selected_items:
                 list_item.md_bg_color = [0.8, 0.9, 1, 1]
             
