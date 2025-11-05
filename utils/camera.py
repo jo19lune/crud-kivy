@@ -45,10 +45,6 @@ class ImageManager:
             
             def handle_selection(selection):
                 if selection:
-                    # Copier l'image sélectionnée dans le dossier assets
-                    import shutil
-                    from datetime import datetime
-                    
                     source_path = selection[0]
                     file_ext = os.path.splitext(source_path)[1]
                     new_filename = f"assets/images/gallery_{datetime.now().strftime('%Y%m%d_%H%M%S')}{file_ext}"
