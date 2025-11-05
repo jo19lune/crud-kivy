@@ -1,6 +1,7 @@
 kivy==2.1.0
 kivymd==1.1.1
 pillow==9.5.0
+plyer==2.0.0
 buildozer==1.4.2
 cython==0.29.34
 
