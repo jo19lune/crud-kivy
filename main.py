@@ -459,11 +459,11 @@ class MyApp(MDApp):
     def _check_assets(self):
         """Vérifie que les assets sont accessibles"""
         logo_path = ImageManager.get_default_image()
-        print(f"Vérification assets: {logo_path}")
-        print(f"Logo accessible: {os.path.exists(logo_path)}")
+        # print(f"Vérification assets: {logo_path}")
+        # print(f"Logo accessible: {os.path.exists(logo_path)}")
         
         if not os.path.exists(logo_path):
-            print("Logo non trouvé, création d'un logo par défaut")
+            # print("Logo non trouvé, création d'un logo par défaut")
             ImageManager.ensure_assets_folder()
     
     def on_start(self):
@@ -535,5 +535,5 @@ def ensure_directories():
     print("=============================")
 
 if __name__ == '__main__':
-    ensure_directories()
+    # ensure_directories()
     MyApp().run()

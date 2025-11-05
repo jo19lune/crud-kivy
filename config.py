@@ -29,10 +29,10 @@ def get_database_path():
     return os.path.join(PROJECT_ROOT, "data", "database.json")
 
 # Afficher les chemins pour débogage
-print("=== CONFIGURATION DES CHEMINS ===")
-print(f"Racine du projet: {PROJECT_ROOT}")
-print(f"Dossier assets: {get_assets_path()}")
-print(f"Dossier images: {get_images_path()}")
-print(f"Dossier data: {get_data_path()}")
-print(f"Base de données: {get_database_path()}")
-print("==================================")
+# print("=== CONFIGURATION DES CHEMINS ===")
+# print(f"Racine du projet: {PROJECT_ROOT}")
+# print(f"Dossier assets: {get_assets_path()}")
+# print(f"Dossier images: {get_images_path()}")
+# print(f"Dossier data: {get_data_path()}")
+# print(f"Base de données: {get_database_path()}")
+# print("==================================")
