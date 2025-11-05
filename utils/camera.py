@@ -54,9 +54,34 @@ class ImageManager:
     def get_default_image():
         """Retourne le chemin ABSOLU de l'image par défaut"""
         logo_path = os.path.join(get_assets_path(), "logo.png")
-        print(f"📍 Chemin logo: {logo_path}")
-        print(f"📍 Logo existe: {os.path.exists(logo_path)}")
         return logo_path
+
+    @staticmethod
+    def get_safe_image_path(image_path):
+        """
+        Retourne un chemin d'image valide.
+        Si l'image n'existe pas, retourne l'image par défaut.
+        """
+        if not image_path:
+            return ImageManager.get_default_image()
+        
+        # Vérifier si c'est un chemin absolu
+        if os.path.isabs(image_path):
+            if os.path.exists(image_path):
+                return image_path
+            else:
+                print(f"Image absente (absolu): {image_path}")
+                return ImageManager.get_default_image()
+        
+        # Vérifier si c'est un chemin relatif
+        project_root = get_project_root()
+        absolute_path = os.path.join(project_root, image_path)
+        
+        if os.path.exists(absolute_path):
+            return absolute_path
+        else:
+            print(f"Image absente (relatif): {image_path} -> {absolute_path}")
+            return ImageManager.get_default_image()
 
     @staticmethod
     def take_photo(callback=None):
@@ -65,8 +90,6 @@ class ImageManager:
             ImageManager.ensure_assets_folder()
             images_path = get_images_path()
             photo_path = os.path.join(images_path, f"photo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg")
-            
-            print(f"Tentative de prise de photo vers: {photo_path}")
             
             if platform == 'android':
                 camera.take_picture(
@@ -105,7 +128,6 @@ class ImageManager:
                         callback(None)
                     return
                 
-                # Retourner le chemin original - la copie se fera plus tard lors de la sauvegarde
                 if callback:
                     callback(valid_path)
             
@@ -140,23 +162,19 @@ class ImageManager:
             new_filename = f"gallery_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}{file_ext}"
             new_filepath = os.path.join(images_path, new_filename)
             
-            print(f"=== COPIE D'IMAGE ===")
-            print(f"Source: {source_path}")
-            print(f"Destination: {new_filepath}")
-            
             # Copier le fichier
             shutil.copy2(source_path, new_filepath)
             
             # Vérifier que la copie a réussi
             if os.path.exists(new_filepath):
-                print(f"✅ Image copiée avec succès: {new_filepath}")
-                return new_filepath  # Retourner le chemin ABSOLU
+                print(f"Image copiée avec succès: {new_filepath}")
+                return new_filepath
             else:
-                print("❌ Échec de la copie de l'image")
+                print("Échec de la copie de l'image")
                 return ImageManager.get_default_image()
                 
         except Exception as e:
-            print(f"❌ Erreur lors de la copie de l'image: {e}")
+            print(f"Erreur lors de la copie de l'image: {e}")
             return ImageManager.get_default_image()
 
     @staticmethod
@@ -171,7 +189,6 @@ class ImageManager:
         
         for path in paths_to_try:
             if os.path.exists(path) and os.path.isfile(path):
-                print(f"Chemin valide trouvé: {path}")
                 return path
         
         print(f"Aucun chemin valide trouvé pour: {file_path}")
@@ -179,14 +196,5 @@ class ImageManager:
 
     @staticmethod
     def is_valid_image_path(path):
-        """Vérifie si le chemin d'image est valide"""
-        if not path:
-            return False
-            
-        # Vérifier si le chemin existe
-        if os.path.exists(path):
-            valid_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
-            file_ext = os.path.splitext(path)[1].lower()
-            return file_ext in valid_extensions
-        
-        return False
+        """Vérifie si le chemin d'image est valide et accessible"""
+        return ImageManager.get_safe_image_path(path) != ImageManager.get_default_image()

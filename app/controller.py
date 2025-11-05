@@ -6,28 +6,58 @@ class ItemController:
         self.model = ItemModel()
         self.view = view
         self.selected_items = set()
-        self.view_mode = "grid"  # "grid" ou "list"
+        self.view_mode = "grid"
         self.current_editing_item = None
         self.refresh_view()
 
     def refresh_view(self, search_query=None):
+        """Rafraîchit la vue avec gestion des images manquantes"""
         if search_query:
             items = self.model.search_items(search_query)
         else:
             items = self.model.load_items()
         
-        self.view.display_items(items, self.selected_items, self.view_mode)
+        # Nettoyer les items avec images manquantes
+        cleaned_items = self._clean_items_with_missing_images(items)
+        if len(cleaned_items) != len(items):
+            print(f"{len(items) - len(cleaned_items)} items nettoyés (images manquantes)")
+        
+        self.view.display_items(cleaned_items, self.selected_items, self.view_mode)
         
         # Mettre à jour le compteur d'items
         if hasattr(self.view, 'ids') and hasattr(self.view.ids, 'items_count'):
-            count = len(items)
+            count = len(cleaned_items)
             self.view.ids.items_count.text = f"({count} item{'s' if count != 1 else ''})"
+
+    def _clean_items_with_missing_images(self, items):
+        """Nettoie les items avec images manquantes et les corrige automatiquement"""
+        cleaned_items = []
+        needs_save = False
+        
+        for item in items:
+            original_image = item["image"]
+            safe_image = ImageManager.get_safe_image_path(original_image)
+            
+            # Si l'image a changé (image manquante détectée), mettre à jour l'item
+            if safe_image != original_image:
+                item["image"] = safe_image
+                needs_save = True
+                print(f"Image corrigée pour '{item['name']}': {original_image} -> {safe_image}")
+            
+            cleaned_items.append(item)
+        
+        # Sauvegarder si des corrections ont été faites
+        if needs_save:
+            self.model.save_items(cleaned_items)
+            print("Items sauvegardés après correction des images")
+        
+        return cleaned_items
 
     def add_item(self, name, desc, image_path):
         if name.strip():
             # Traiter le chemin de l'image
             final_image_path = self._process_image_path(image_path)
-            print(f"📍 Ajout item avec image: {final_image_path}")
+            print(f"Ajout item avec image: {final_image_path}")
             
             self.model.add_item(name, desc, final_image_path)
             self.refresh_view()
@@ -104,24 +134,41 @@ class ItemController:
     def update_item_with_dialog(self, name, desc, image_path):
         """Met à jour l'item en cours d'édition"""
         if self.current_editing_item:
-            # Copier l'image seulement si c'est une nouvelle image
-            if image_path and image_path != ImageManager.get_default_image() and not image_path.startswith("assets/images/"):
-                image_path = ImageManager.copy_image_to_assets(image_path)
-            elif not image_path or image_path == ImageManager.get_default_image():
-                # Garder l'ancienne image
-                items = self.model.load_items()
-                old_item = next((item for item in items if item["id"] == self.current_editing_item), None)
-                if old_item:
-                    image_path = old_item["image"]
+            # Récupérer l'item original pour comparer les images
+            items = self.model.load_items()
+            old_item = next((item for item in items if item["id"] == self.current_editing_item), None)
             
-            self.update_item(self.current_editing_item, name, desc, image_path)
-            self.current_editing_item = None
+            if old_item:
+                # Vérifier si l'image a changé
+                image_changed = False
+                final_image_path = image_path
+                
+                if image_path and image_path != ImageManager.get_default_image():
+                    # Si une nouvelle image est sélectionnée (différente de l'ancienne)
+                    if image_path != old_item["image"] and not image_path.startswith("assets/images/"):
+                        print(f"Nouvelle image détectée, copie en cours...")
+                        final_image_path = ImageManager.copy_image_to_assets(image_path)
+                        image_changed = True
+                    else:
+                        # Même image ou image déjà dans assets/images
+                        final_image_path = old_item["image"]
+                else:
+                    # Aucune image sélectionnée ou image par défaut
+                    final_image_path = old_item["image"]
+                
+                print(f"Image finale pour la mise à jour: {final_image_path}")
+                
+                # Mettre à jour l'item
+                self.model.update_item(self.current_editing_item, name, desc, final_image_path)
+                self.current_editing_item = None
+            else:
+                print("Item à modifier non trouvé")
 
     def get_card_color(self, item_id):
         """Retourne la couleur en fonction de la sélection"""
         if item_id in self.selected_items:
-            return [0.8, 0.9, 1, 1]  # Bleu clair pour la sélection
-        return [1, 1, 1, 1]  # Blanc normal
+            return [0.8, 0.9, 1, 1]
+        return [1, 1, 1, 1]
 
     def _process_image_path(self, image_path):
         """Traite le chemin de l'image : copie si nécessaire"""
@@ -134,3 +181,10 @@ class ItemController:
         
         # Sinon, copier l'image dans assets/images
         return ImageManager.copy_image_to_assets(image_path)
+
+    def cleanup_missing_images(self):
+        """Nettoie tous les items avec images manquantes (méthode utilitaire)"""
+        items = self.model.load_items()
+        cleaned_items = self._clean_items_with_missing_images(items)
+        print(f"Nettoyage terminé: {len(items)} -> {len(cleaned_items)} items valides")
+        self.refresh_view()
