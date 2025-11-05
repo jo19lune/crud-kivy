@@ -26,8 +26,8 @@ class ItemController:
         
         # Nettoyer les items avec images manquantes
         cleaned_items = self._clean_items_with_missing_images(items)
-        if len(cleaned_items) != len(items):
-            print(f"{len(items) - len(cleaned_items)} items nettoyés (images manquantes)")
+        # if len(cleaned_items) != len(items):
+            # print(f"{len(items) - len(cleaned_items)} items nettoyés (images manquantes)")
         
         self.view.display_items(cleaned_items, self.selected_items, self.view_mode)
         
@@ -86,14 +86,14 @@ class ItemController:
             if safe_image != original_image:
                 item["image"] = safe_image
                 needs_save = True
-                print(f"Image corrigée pour '{item['name']}': {original_image} -> {safe_image}")
+                # print(f"Image corrigée pour '{item['name']}': {original_image} -> {safe_image}")
             
             cleaned_items.append(item)
         
         # Sauvegarder si des corrections ont été faites
         if needs_save:
             self.model.save_items(cleaned_items)
-            print("Items sauvegardés après correction des images")
+            # print("Items sauvegardés après correction des images")
         
         return cleaned_items
 
@@ -101,7 +101,7 @@ class ItemController:
         if name.strip():
             # Traiter le chemin de l'image
             final_image_path = self._process_image_path(image_path)
-            print(f"Ajout item avec image: {final_image_path}")
+            # print(f"Ajout item avec image: {final_image_path}")
             
             self.model.add_item(name, desc, final_image_path)
             self.refresh_view()
@@ -190,7 +190,7 @@ class ItemController:
                 if image_path and image_path != ImageManager.get_default_image():
                     # Si une nouvelle image est sélectionnée (différente de l'ancienne)
                     if image_path != old_item["image"] and not image_path.startswith("assets/images/"):
-                        print(f"Nouvelle image détectée, copie en cours...")
+                        # print(f"Nouvelle image détectée, copie en cours...")
                         final_image_path = ImageManager.copy_image_to_assets(image_path)
                         image_changed = True
                     else:
@@ -200,7 +200,7 @@ class ItemController:
                     # Aucune image sélectionnée ou image par défaut
                     final_image_path = old_item["image"]
                 
-                print(f"Image finale pour la mise à jour: {final_image_path}")
+                # print(f"Image finale pour la mise à jour: {final_image_path}")
                 
                 # Mettre à jour l'item
                 self.model.update_item(self.current_editing_item, name, desc, final_image_path)
@@ -244,7 +244,7 @@ class ItemController:
             # Ajouter l'image par défaut pour ne pas la supprimer
             used_image_paths.add(ImageManager.get_default_image_relative())
             
-            print(f"Images utilisées: {used_image_paths}")
+            # print(f"Images utilisées: {used_image_paths}")
             
             # Étape 3: Nettoyer les images non utilisées
             images_deleted = ImageManager.cleanup_unused_images(used_image_paths)
@@ -252,7 +252,7 @@ class ItemController:
             # Étape 4: Sauvegarder les modifications si nécessaire
             if items_cleaned > 0:
                 self.model.save_items(cleaned_items)
-                print(f"{items_cleaned} items nettoyés (images manquantes)")
+                # print(f"{items_cleaned} items nettoyés (images manquantes)")
             
             # Afficher un message de confirmation
             message_parts = []
@@ -278,7 +278,7 @@ class ItemController:
             }
             
         except Exception as e:
-            print(f"Erreur lors du nettoyage: {e}")
+            # print(f"Erreur lors du nettoyage: {e}")
             if hasattr(self.view, 'show_error_dialog'):
                 self.view.show_error_dialog("Erreur", "Impossible d'effectuer le nettoyage")
             return {
@@ -301,7 +301,7 @@ class ItemController:
             if safe_image_path == ImageManager.get_default_image():
                 item["image"] = ImageManager.get_default_image_relative()
                 needs_save = True
-                print(f"Image manquante corrigée pour '{item['name']}': {original_image} -> {ImageManager.get_default_image_relative()}")
+                # print(f"Image manquante corrigée pour '{item['name']}': {original_image} -> {ImageManager.get_default_image_relative()}")
             
             cleaned_items.append(item)
         
@@ -314,7 +314,7 @@ class ItemController:
         """
         try:
             items = self.model.load_items()
-            print(f"Correction des chemins pour {len(items)} items")
+            # print(f"Correction des chemins pour {len(items)} items")
             
             # Corriger les chemins d'images
             fixed_items, changes_made = ImageManager.fix_image_paths_in_items(items)
@@ -322,7 +322,7 @@ class ItemController:
             if changes_made:
                 # Sauvegarder les corrections
                 self.model.save_items(fixed_items)
-                print("Tous les chemins d'images ont été corrigés")
+                # print("Tous les chemins d'images ont été corrigés")
                 
                 # Afficher un message de confirmation
                 if hasattr(self.view, 'show_info_dialog'):
@@ -333,14 +333,14 @@ class ItemController:
                 self.refresh_view()
                 return True
             else:
-                print("ℹAucun chemin d'image à corriger")
+                # print("ℹAucun chemin d'image à corriger")
                 if hasattr(self.view, 'show_info_dialog'):
                     self.view.show_info_dialog("Aucun changement", 
                                              "Tous les chemins d'images sont déjà corrects")
                 return False
                 
         except Exception as e:
-            print(f"Erreur lors de la correction des chemins: {e}")
+            # print(f"Erreur lors de la correction des chemins: {e}")
             if hasattr(self.view, 'show_error_dialog'):
                 self.view.show_error_dialog("Erreur", "Impossible de corriger les chemins d'images")
             return False

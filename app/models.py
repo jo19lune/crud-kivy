@@ -97,5 +97,5 @@ class ItemModel:
             if item.get("image"):
                 image_paths.append(item["image"])
         
-        print(f"{len(image_paths)} chemins d'images trouvés dans la base")
+        # print(f"{len(image_paths)} chemins d'images trouvés dans la base")
         return image_paths
