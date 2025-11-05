@@ -33,22 +33,22 @@ class ImageManager:
         # S'assurer que logo.png existe
         logo_path = os.path.join(get_assets_path(), "logo.png")
         if not os.path.exists(logo_path):
-            print(f"⚠️ Logo non trouvé: {logo_path}")
+            # print(f"⚠️ Logo non trouvé: {logo_path}")
             # Créer un logo par défaut si nécessaire
             ImageManager._create_default_logo()
 
     @staticmethod
     def _create_default_logo():
         """Crée un logo par défaut si il n'existe pas"""
-        try:
-            logo_path = os.path.join(get_assets_path(), "logo.png")
-            # Créer un PNG 1x1 pixel transparent
-            png_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x00\x00\x00\x00IEND\xaeB`\x82'
-            with open(logo_path, 'wb') as f:
-                f.write(png_data)
-            print(f"✅ Logo par défaut créé: {logo_path}")
-        except Exception as e:
-            print(f"❌ Erreur création logo: {e}")
+        logo_path = os.path.join(get_assets_path(), "logo.png")
+        # Créer un PNG 1x1 pixel transparent
+        png_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x00\x00\x00\x00IEND\xaeB`\x82'
+        with open(logo_path, 'wb') as f:
+            f.write(png_data)
+        # print(f"✅ Logo par défaut créé: {logo_path}")
+        # try:
+        # except Exception as e:
+        #     print(f"❌ Erreur création logo: {e}")
 
     @staticmethod
     def get_default_image():
@@ -75,7 +75,7 @@ class ImageManager:
             if os.path.exists(image_path):
                 return image_path
             else:
-                print(f"Image absente (absolu): {image_path}")
+                # print(f"Image absente (absolu): {image_path}")
                 return ImageManager.get_default_image()
         
         # Vérifier si c'est un chemin relatif
@@ -85,7 +85,7 @@ class ImageManager:
         if os.path.exists(absolute_path):
             return absolute_path
         else:
-            print(f"Image absente (relatif): {image_path} -> {absolute_path}")
+            # print(f"Image absente (relatif): {image_path} -> {absolute_path}")
             return ImageManager.get_default_image()
 
     @staticmethod
@@ -107,7 +107,7 @@ class ImageManager:
             
             return photo_path
         except Exception as e:
-            print(f"Erreur caméra: {e}")
+            # print(f"Erreur caméra: {e}")
             ImageManager.select_from_gallery(callback)
             return None
 
@@ -117,18 +117,18 @@ class ImageManager:
         try:
             def handle_selection(selection):
                 if not selection:
-                    print("Aucune image sélectionnée")
+                    # print("Aucune image sélectionnée")
                     if callback:
                         callback(None)
                     return
                 
                 source_path = selection[0]
-                print(f"Fichier sélectionné: {source_path}")
+                # print(f"Fichier sélectionné: {source_path}")
                 
                 # Méthode robuste pour obtenir un chemin valide
                 valid_path = ImageManager._get_valid_path(source_path)
                 if not valid_path:
-                    print("Impossible d'obtenir un chemin valide pour le fichier")
+                    # print("Impossible d'obtenir un chemin valide pour le fichier")
                     if callback:
                         callback(None)
                     return
@@ -143,7 +143,7 @@ class ImageManager:
             )
             
         except Exception as e:
-            print(f"Erreur galerie: {e}")
+            # print(f"Erreur galerie: {e}")
             if callback:
                 callback(None)
 
@@ -155,7 +155,7 @@ class ImageManager:
             images_path = get_images_path()
             
             if not source_path or not os.path.exists(source_path):
-                print(f"Fichier source introuvable: {source_path}")
+                # print(f"Fichier source introuvable: {source_path}")
                 return ImageManager.get_default_image()
             
             # Obtenir l'extension du fichier
@@ -172,14 +172,14 @@ class ImageManager:
             
             # Vérifier que la copie a réussi
             if os.path.exists(new_filepath):
-                print(f"Image copiée avec succès: {new_filepath}")
+                # print(f"Image copiée avec succès: {new_filepath}")
                 return new_filepath
             else:
-                print("Échec de la copie de l'image")
+                # print("Échec de la copie de l'image")
                 return ImageManager.get_default_image()
                 
         except Exception as e:
-            print(f"Erreur lors de la copie de l'image: {e}")
+            # print(f"Erreur lors de la copie de l'image: {e}")
             return ImageManager.get_default_image()
 
     @staticmethod
@@ -196,7 +196,7 @@ class ImageManager:
             if os.path.exists(path) and os.path.isfile(path):
                 return path
         
-        print(f"Aucun chemin valide trouvé pour: {file_path}")
+        # print(f"Aucun chemin valide trouvé pour: {file_path}")
         return None
 
     @staticmethod
@@ -241,7 +241,7 @@ class ImageManager:
             
             # Vérifier si une correction est nécessaire
             if fixed_path != original_path:
-                print(f"Correction chemin image: '{original_path}' -> '{fixed_path}'")
+                # print(f"Correction chemin image: '{original_path}' -> '{fixed_path}'")
                 item["image"] = fixed_path
                 changes_made = True
             
@@ -258,14 +258,14 @@ class ImageManager:
         try:
             images_path = get_images_path()
             if not os.path.exists(images_path):
-                print("Dossier images introuvable")
+                # print("Dossier images introuvable")
                 return 0
             
             deleted_count = 0
             default_image = ImageManager.get_default_image_relative()
             
-            print(f"Recherche d'images non utilisées dans: {images_path}")
-            print(f"Images utilisées: {used_image_paths}")
+            # print(f"Recherche d'images non utilisées dans: {images_path}")
+            # print(f"Images utilisées: {used_image_paths}")
             
             # Parcourir tous les fichiers dans assets/images
             for filename in os.listdir(images_path):
@@ -274,7 +274,7 @@ class ImageManager:
                     
                     # Ne pas supprimer l'image par défaut
                     if file_relative_path == default_image:
-                        print(f"Conservation image par défaut: {filename}")
+                        # print(f"Conservation image par défaut: {filename}")
                         continue
                     
                     # Vérifier si l'image est utilisée
@@ -282,16 +282,16 @@ class ImageManager:
                         absolute_path = os.path.join(images_path, filename)
                         try:
                             os.remove(absolute_path)
-                            print(f"Image non utilisée supprimée: {filename}")
+                            # print(f"Image non utilisée supprimée: {filename}")
                             deleted_count += 1
                         except Exception as e:
                             print(f"Erreur suppression {filename}: {e}")
-                    else:
-                        print(f"Image utilisée conservée: {filename}")
+                    # else:
+                    #     print(f"Image utilisée conservée: {filename}")
 
-            print(f"Nettoyage terminé: {deleted_count} images supprimées")
+            # print(f"Nettoyage terminé: {deleted_count} images supprimées")
             return deleted_count
             
         except Exception as e:
-            print(f"Erreur lors du nettoyage des images: {e}")
+            # print(f"Erreur lors du nettoyage des images: {e}")
             return 0
