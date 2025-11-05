@@ -1,5 +1,6 @@
 from app.models import ItemModel
 from utils.camera import ImageManager
+from kivy.clock import Clock
 
 class ItemController:
     def __init__(self, view):
@@ -8,14 +9,20 @@ class ItemController:
         self.selected_items = set()
         self.view_mode = "grid"
         self.current_editing_item = None
-        self.refresh_view()
+        self.sort_mode = "none"  # "none", "name_asc", "name_desc"
+        
+        # Rafraîchir la vue après un court délai pour éviter les problèmes de timing
+        Clock.schedule_once(lambda dt: self.refresh_view(), 0.1)
 
     def refresh_view(self, search_query=None):
-        """Rafraîchit la vue avec gestion des images manquantes"""
+        """Rafraîchit la vue avec gestion des images manquantes et tri"""
         if search_query:
             items = self.model.search_items(search_query)
         else:
             items = self.model.load_items()
+        
+        # Appliquer le tri
+        items = self._apply_sort(items)
         
         # Nettoyer les items avec images manquantes
         cleaned_items = self._clean_items_with_missing_images(items)
@@ -24,10 +31,47 @@ class ItemController:
         
         self.view.display_items(cleaned_items, self.selected_items, self.view_mode)
         
-        # Mettre à jour le compteur d'items
-        if hasattr(self.view, 'ids') and hasattr(self.view.ids, 'items_count'):
-            count = len(cleaned_items)
+        # Mettre à jour le compteur d'items et info tri
+        self._update_display_info(cleaned_items)
+
+    def _apply_sort(self, items):
+        """Applique le tri selon le mode actuel"""
+        if self.sort_mode == "name_asc":
+            return sorted(items, key=lambda x: x["name"].lower())
+        elif self.sort_mode == "name_desc":
+            return sorted(items, key=lambda x: x["name"].lower(), reverse=True)
+        else:
+            return items
+
+    def _update_display_info(self, items):
+        """Met à jour les informations d'affichage"""
+        if hasattr(self.view, 'ids'):
+            count = len(items)
             self.view.ids.items_count.text = f"({count} item{'s' if count != 1 else ''})"
+            
+            # Mettre à jour l'info de tri
+            sort_text = ""
+            if self.sort_mode == "name_asc":
+                sort_text = "A-Z"
+            elif self.sort_mode == "name_desc":
+                sort_text = "Z-A"
+            self.view.ids.sort_info.text = sort_text
+            
+            # Mettre à jour le titre
+            title = "Mes Items"
+            if self.sort_mode != "none":
+                title += f" • Tri: {sort_text}"
+            self.view.ids.items_title.text = title
+
+    def set_sort_mode(self, sort_mode):
+        """Définit le mode de tri"""
+        self.sort_mode = sort_mode
+        self.refresh_view()
+
+    def set_view_mode(self, view_mode):
+        """Définit le mode de vue"""
+        self.view_mode = view_mode
+        self.refresh_view()
 
     def _clean_items_with_missing_images(self, items):
         """Nettoie les items avec images manquantes et les corrige automatiquement"""
@@ -188,3 +232,8 @@ class ItemController:
         cleaned_items = self._clean_items_with_missing_images(items)
         print(f"Nettoyage terminé: {len(items)} -> {len(cleaned_items)} items valides")
         self.refresh_view()
+        
+        # Afficher un message de confirmation
+        if hasattr(self.view, 'show_info_dialog'):
+            self.view.show_info_dialog("Nettoyage terminé", 
+                                     f"Base de données nettoyée : {len(cleaned_items)} items valides")

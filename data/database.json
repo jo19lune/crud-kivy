@@ -15,7 +15,7 @@
         "id": "80367164-4628-4359-99d3-9bb61305a978",
         "name": "focon",
         "desc": "animal",
-        "image": "D:\\Projets\\py\\mobile\\morse\\../../../../Projets/py/mobile/morse/assets/logo.png"
+        "image": "D:\\Projets\\py\\mobile\\morse\\assets\\images\\gallery_20251105_094803_866408.jpg"
     },
     {
         "id": "6eba9171-fedc-49d9-b1f2-2f7a5320b7f6",
@@ -70,5 +70,17 @@
         "name": "affiche",
         "desc": "poster",
         "image": "D:\\Projets\\py\\mobile\\morse\\assets\\images\\gallery_20251105_092621_924119.jpeg"
+    },
+    {
+        "id": "dc36915c-f88d-47fa-bb48-b393e9d8d760",
+        "name": "juin",
+        "desc": "moi",
+        "image": "D:\\Projets\\py\\mobile\\morse\\assets\\images\\gallery_20251105_094903_771365.jpg"
+    },
+    {
+        "id": "644c3031-8d44-4fe6-8ca0-7646df8e003f",
+        "name": "lune",
+        "desc": "astre",
+        "image": "D:\\Projets\\py\\mobile\\morse\\assets\\images\\gallery_20251105_105052_108849.jpg"
     }
 ]

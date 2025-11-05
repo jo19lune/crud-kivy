@@ -13,8 +13,10 @@ from kivy.uix.image import AsyncImage
 from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDIconButton
+from kivymd.uix.menu import MDDropdownMenu
 import os
 from kivy.clock import Clock
+from kivy.metrics import dp
 import sys
 
 try:
@@ -149,6 +151,20 @@ class MainScreen(Screen):
         )
         self.error_dialog.open()
 
+    def show_info_dialog(self, title, message):
+        """Affiche une boîte de dialogue d'information"""
+        info_dialog = MDDialog(
+            title=title,
+            text=message,
+            buttons=[
+                MDFlatButton(
+                    text="OK",
+                    on_release=lambda x: info_dialog.dismiss()
+                )
+            ]
+        )
+        info_dialog.open()
+
     def handle_camera_result_for_edit(self, image_path):
         """Gère le résultat de la caméra pour l'édition"""
         if image_path and self.current_edit_content:
@@ -182,33 +198,48 @@ class MainScreen(Screen):
         # Mettre à jour le bouton de suppression
         self.ids.delete_selected_btn.disabled = len(selected_items) == 0
         
-        # Mettre à jour le switch de mode vue
-        self.ids.view_mode_switch.active = view_mode == "list"
+        # Mettre à jour les boutons de vue
+        self.ids.grid_view_btn.theme_text_color = "Primary" if view_mode == "grid" else "Secondary"
+        self.ids.list_view_btn.theme_text_color = "Primary" if view_mode == "list" else "Secondary"
         
         if view_mode == "grid":
             self.display_grid_view(items, selected_items, grid_container)
+            grid_container.opacity = 1
+            list_container.opacity = 0
+            grid_container.size_hint_y = None
+            list_container.size_hint_y = 0
         else:
             self.display_list_view(items, selected_items, list_container)
+            grid_container.opacity = 0
+            list_container.opacity = 1
+            grid_container.size_hint_y = 0
+            list_container.size_hint_y = None
     
     def display_grid_view(self, items, selected_items, container):
         for item in items:
-            # Créer la carte
+            # Créer la carte avec les propriétés nécessaires
             card = MDCard(
                 orientation='vertical',
                 size_hint_y=None,
-                height=240,
-                padding=10,
-                spacing=10,
+                height=dp(240),
+                padding=dp(10),
+                spacing=dp(10),
                 elevation=2
             )
             
+            # Ajouter les propriétés pour le template ItemCard
+            card.item_id = item["id"]
+            card.source = ImageManager.get_safe_image_path(item["image"])
+            card.name = item["name"]
+            card.desc = item["desc"]
+            
             # Header avec checkbox et bouton d'édition
-            header = MDBoxLayout(adaptive_height=True, spacing=5)
+            header = MDBoxLayout(adaptive_height=True, spacing=dp(5))
             
             # Checkbox
             checkbox = MDCheckbox(
                 size_hint=(None, None),
-                size=(24, 24),
+                size=(dp(24), dp(24)),
                 active=item["id"] in selected_items
             )
             checkbox.bind(active=lambda instance, value, item_id=item["id"]: 
@@ -219,7 +250,7 @@ class MainScreen(Screen):
             edit_btn = MDIconButton(
                 icon="pencil",
                 size_hint=(None, None),
-                size=(24, 24),
+                size=(dp(24), dp(24)),
                 theme_text_color="Secondary"
             )
             edit_btn.bind(on_release=lambda instance, item_id=item["id"]: 
@@ -230,7 +261,7 @@ class MainScreen(Screen):
             
             # Image
             img = AsyncImage(
-                source=item.get("image", "assets/logo.png"),
+                source=ImageManager.get_safe_image_path(item["image"]),
                 size_hint_y=0.6,
                 allow_stretch=True,
                 keep_ratio=True
@@ -258,25 +289,33 @@ class MainScreen(Screen):
             # Style si sélectionné
             if item["id"] in selected_items:
                 card.md_bg_color = [0.8, 0.9, 1, 1]
+            else:
+                card.md_bg_color = [1, 1, 1, 1]
             
             container.add_widget(card)
         
-    def display_list_view(self, items, selected_items, container):        
+    def display_list_view(self, items, selected_items, container):
         for item in items:
-            # Créer un layout horizontal pour la liste
+            # Créer un layout personnalisé pour la liste
             list_item = MDBoxLayout(
                 orientation='horizontal',
                 adaptive_height=True,
-                spacing=10,
-                padding=10,
+                spacing=dp(10),
+                padding=dp(10),
                 size_hint_y=None,
-                height=80
+                height=dp(80)
             )
+            
+            # Ajouter les propriétés pour le template ListItem
+            list_item.item_id = item["id"]
+            list_item.source = ImageManager.get_safe_image_path(item["image"])
+            list_item.text = item["name"]
+            list_item.secondary_text = item["desc"]
             
             # Checkbox
             checkbox = MDCheckbox(
                 size_hint=(None, None),
-                size=(24, 24),
+                size=(dp(24), dp(24)),
                 pos_hint={'center_y': 0.5},
                 active=item["id"] in selected_items
             )
@@ -284,12 +323,25 @@ class MainScreen(Screen):
                 self.app.controller.toggle_item_selection(item_id))
             list_item.add_widget(checkbox)
             
+            # Image miniature
+            img = AsyncImage(
+                source=ImageManager.get_safe_image_path(item["image"]),
+                size_hint=(None, None),
+                size=(dp(50), dp(50)),
+                pos_hint={'center_y': 0.5},
+                allow_stretch=True,
+                keep_ratio=True,
+                mipmap=True
+            )
+            list_item.add_widget(img)
+            
             # Contenu textuel
             text_layout = MDBoxLayout(
                 orientation='vertical',
+                spacing=dp(2),
                 adaptive_height=True,
-                spacing=5,
-                size_hint_x=0.7
+                size_hint_x=0.6,
+                pos_hint={'center_y': 0.5}
             )
             
             # Nom
@@ -297,16 +349,20 @@ class MainScreen(Screen):
                 text=item["name"],
                 theme_text_color="Primary",
                 font_style="Subtitle1",
-                adaptive_height=True
+                adaptive_height=True,
+                shorten=True,
+                shorten_from='right'
             )
             text_layout.add_widget(name_label)
             
             # Description
             desc_label = MDLabel(
                 text=item["desc"],
-                theme_text_color="Secondary",
+                theme_text_color="Secondary", 
                 font_style="Body2",
-                adaptive_height=True
+                adaptive_height=True,
+                shorten=True,
+                shorten_from='right'
             )
             text_layout.add_widget(desc_label)
             
@@ -316,7 +372,7 @@ class MainScreen(Screen):
             edit_btn = MDIconButton(
                 icon="pencil",
                 size_hint=(None, None),
-                size=(40, 40),
+                size=(dp(40), dp(40)),
                 theme_text_color="Secondary",
                 pos_hint={'center_y': 0.5}
             )
@@ -327,6 +383,8 @@ class MainScreen(Screen):
             # Couleur de fond si sélectionné
             if item["id"] in selected_items:
                 list_item.md_bg_color = [0.8, 0.9, 1, 1]
+            else:
+                list_item.md_bg_color = [1, 1, 1, 1]
             
             container.add_widget(list_item)
 
@@ -335,6 +393,7 @@ class MyApp(MDApp):
         super().__init__(**kwargs)
         self.controller = None
         self.main_screen = None
+        self.sort_menu = None
     
     def build(self):
         self.theme_cls.theme_style = "Light"
@@ -349,19 +408,57 @@ class MyApp(MDApp):
         self.main_screen.app = self
         sm.add_widget(self.main_screen)
         
-        # Initialiser le controller
+        # Initialiser le controller APRÈS la création de l'écran principal
         self.controller = ItemController(self.main_screen)
         
+        # Créer le menu de tri
+        self._create_sort_menu()
+        
         return sm
+
+    def _create_sort_menu(self):
+        """Crée le menu déroulant pour le tri"""
+        menu_items = [
+            {
+                "text": "Aucun tri",
+                "viewclass": "OneLineListItem",
+                "on_release": lambda x="none": self.set_sort_mode(x),
+            },
+            {
+                "text": "Nom A-Z",
+                "viewclass": "OneLineListItem",
+                "on_release": lambda x="name_asc": self.set_sort_mode(x),
+            },
+            {
+                "text": "Nom Z-A", 
+                "viewclass": "OneLineListItem",
+                "on_release": lambda x="name_desc": self.set_sort_mode(x),
+            },
+        ]
+        
+        self.sort_menu = MDDropdownMenu(
+            caller=self.main_screen.ids.sort_btn,
+            items=menu_items,
+            width_mult=4,
+        )
+
+    def set_sort_mode(self, sort_mode):
+        """Définit le mode de tri et ferme le menu"""
+        self.controller.set_sort_mode(sort_mode)
+        self.sort_menu.dismiss()
+
+    def show_sort_menu(self):
+        """Affiche le menu de tri"""
+        self.sort_menu.open()
 
     def _check_assets(self):
         """Vérifie que les assets sont accessibles"""
         logo_path = ImageManager.get_default_image()
-        print(f"🔍 Vérification assets: {logo_path}")
-        print(f"🔍 Logo accessible: {os.path.exists(logo_path)}")
+        print(f"Vérification assets: {logo_path}")
+        print(f"Logo accessible: {os.path.exists(logo_path)}")
         
         if not os.path.exists(logo_path):
-            print("⚠️ Logo non trouvé, création d'un logo par défaut")
+            print("Logo non trouvé, création d'un logo par défaut")
             ImageManager.ensure_assets_folder()
     
     def on_start(self):
