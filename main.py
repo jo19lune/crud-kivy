@@ -387,6 +387,11 @@ class MainScreen(Screen):
                 list_item.md_bg_color = [1, 1, 1, 1]
             
             container.add_widget(list_item)
+    
+    def fix_image_paths(self):
+        """Lance la correction des chemins d'images"""
+        if hasattr(self.app, 'controller'):
+            self.app.controller.fix_image_paths()
 
 class MyApp(MDApp):
     def __init__(self, **kwargs):

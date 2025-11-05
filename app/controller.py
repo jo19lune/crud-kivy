@@ -237,3 +237,41 @@ class ItemController:
         if hasattr(self.view, 'show_info_dialog'):
             self.view.show_info_dialog("Nettoyage terminé", 
                                      f"Base de données nettoyée : {len(cleaned_items)} items valides")
+
+    def fix_image_paths(self):
+        """
+        Corrige tous les chemins d'images dans la base de données
+        pour qu'ils soient sous la forme assets/images/nom_fichier.extension
+        """
+        try:
+            items = self.model.load_items()
+            print(f"🔧 Correction des chemins pour {len(items)} items")
+            
+            # Corriger les chemins d'images
+            fixed_items, changes_made = ImageManager.fix_image_paths_in_items(items)
+            
+            if changes_made:
+                # Sauvegarder les corrections
+                self.model.save_items(fixed_items)
+                print("✅ Tous les chemins d'images ont été corrigés")
+                
+                # Afficher un message de confirmation
+                if hasattr(self.view, 'show_info_dialog'):
+                    self.view.show_info_dialog("Chemins corrigés", 
+                                             "Tous les chemins d'images ont été normalisés")
+                
+                # Rafraîchir l'affichage
+                self.refresh_view()
+                return True
+            else:
+                print("ℹ️ Aucun chemin d'image à corriger")
+                if hasattr(self.view, 'show_info_dialog'):
+                    self.view.show_info_dialog("Aucun changement", 
+                                             "Tous les chemins d'images sont déjà corrects")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Erreur lors de la correction des chemins: {e}")
+            if hasattr(self.view, 'show_error_dialog'):
+                self.view.show_error_dialog("Erreur", "Impossible de corriger les chemins d'images")
+            return False

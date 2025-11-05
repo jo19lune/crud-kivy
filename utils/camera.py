@@ -57,6 +57,11 @@ class ImageManager:
         return logo_path
 
     @staticmethod
+    def get_default_image_relative():
+        """Retourne le chemin RELATIF de l'image par défaut"""
+        return "assets/logo.png"
+
+    @staticmethod
     def get_safe_image_path(image_path):
         """
         Retourne un chemin d'image valide.
@@ -198,3 +203,48 @@ class ImageManager:
     def is_valid_image_path(path):
         """Vérifie si le chemin d'image est valide et accessible"""
         return ImageManager.get_safe_image_path(path) != ImageManager.get_default_image()
+
+    @staticmethod
+    def normalize_image_path(image_path):
+        """
+        Normalise le chemin d'image pour qu'il soit sous la forme assets/images/nom_fichier.extension
+        ou assets/logo.png pour l'image par défaut
+        """
+        if not image_path or image_path == ImageManager.get_default_image_relative():
+            return ImageManager.get_default_image_relative()
+        
+        # Si le chemin est déjà dans le format souhaité
+        if image_path.startswith("assets/images/") and len(image_path) > len("assets/images/"):
+            return image_path
+        
+        # Si c'est un chemin absolu, extraire le nom de fichier
+        if os.path.isabs(image_path):
+            filename = os.path.basename(image_path)
+            return f"assets/images/{filename}"
+        
+        # Si c'est un autre chemin relatif, extraire le nom de fichier
+        filename = os.path.basename(image_path)
+        return f"assets/images/{filename}"
+
+    @staticmethod
+    def fix_image_paths_in_items(items):
+        """
+        Corrige tous les chemins d'images dans une liste d'items
+        pour qu'ils soient sous la forme assets/images/nom_fichier.extension
+        """
+        fixed_items = []
+        changes_made = False
+        
+        for item in items:
+            original_path = item.get("image", "")
+            fixed_path = ImageManager.normalize_image_path(original_path)
+            
+            # Vérifier si une correction est nécessaire
+            if fixed_path != original_path:
+                print(f"Correction chemin image: '{original_path}' -> '{fixed_path}'")
+                item["image"] = fixed_path
+                changes_made = True
+            
+            fixed_items.append(item)
+        
+        return fixed_items, changes_made

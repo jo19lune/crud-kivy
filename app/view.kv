@@ -137,15 +137,22 @@
             MDRaisedButton:
                 id: cleanup_btn
                 text: "Nettoyer DB"
-                size_hint_x: 0.2
+                size_hint_x: 0.15
                 tooltip_text: "Nettoyer les images manquantes"
                 on_release: app.controller.cleanup_missing_images()
+
+            MDRaisedButton:
+                id: fix_paths_btn
+                text: "Corriger Chemins"
+                size_hint_x: 0.2
+                tooltip_text: "Normaliser tous les chemins d'images"
+                on_release: app.controller.fix_image_paths()
 
             # Contrôle de vue amélioré
             MDBoxLayout:
                 orientation: 'horizontal'
                 spacing: dp(5)
-                size_hint_x: 0.4
+                size_hint_x: 0.25
                 padding: dp(5)
 
                 MDIconButton:
