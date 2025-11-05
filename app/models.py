@@ -85,3 +85,17 @@ class ItemModel:
         query = query.lower()
         return [item for item in items 
                 if query in item["name"].lower() or query in item["desc"].lower()]
+    
+    def get_all_image_paths(self):
+        """
+        Retourne tous les chemins d'images utilisés dans la base de données
+        """
+        items = self.load_items()
+        image_paths = []
+        
+        for item in items:
+            if item.get("image"):
+                image_paths.append(item["image"])
+        
+        print(f"{len(image_paths)} chemins d'images trouvés dans la base")
+        return image_paths

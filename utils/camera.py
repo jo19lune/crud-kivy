@@ -248,3 +248,50 @@ class ImageManager:
             fixed_items.append(item)
         
         return fixed_items, changes_made
+
+    @staticmethod
+    def cleanup_unused_images(used_image_paths):
+        """
+        Nettoie les images non utilisées dans le dossier assets/images
+        Retourne le nombre d'images supprimées
+        """
+        try:
+            images_path = get_images_path()
+            if not os.path.exists(images_path):
+                print("Dossier images introuvable")
+                return 0
+            
+            deleted_count = 0
+            default_image = ImageManager.get_default_image_relative()
+            
+            print(f"Recherche d'images non utilisées dans: {images_path}")
+            print(f"Images utilisées: {used_image_paths}")
+            
+            # Parcourir tous les fichiers dans assets/images
+            for filename in os.listdir(images_path):
+                if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+                    file_relative_path = f"assets/images/{filename}"
+                    
+                    # Ne pas supprimer l'image par défaut
+                    if file_relative_path == default_image:
+                        print(f"Conservation image par défaut: {filename}")
+                        continue
+                    
+                    # Vérifier si l'image est utilisée
+                    if file_relative_path not in used_image_paths:
+                        absolute_path = os.path.join(images_path, filename)
+                        try:
+                            os.remove(absolute_path)
+                            print(f"Image non utilisée supprimée: {filename}")
+                            deleted_count += 1
+                        except Exception as e:
+                            print(f"Erreur suppression {filename}: {e}")
+                    else:
+                        print(f"Image utilisée conservée: {filename}")
+
+            print(f"Nettoyage terminé: {deleted_count} images supprimées")
+            return deleted_count
+            
+        except Exception as e:
+            print(f"Erreur lors du nettoyage des images: {e}")
+            return 0

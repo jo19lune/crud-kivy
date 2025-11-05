@@ -3,19 +3,19 @@
         "id": "6eba9171-fedc-49d9-b1f2-2f7a5320b7f6",
         "name": "mange",
         "desc": "fruit",
-        "image": "D:\\Projets\\py\\mobile\\morse\\assets\\images\\gallery_20251105_121640_566447.jpg"
+        "image": "D:\\Projets\\py\\mobile\\morse\\assets\\logo.png"
     },
     {
         "id": "f722287e-b234-4bef-a306-0e2bb6bf0027",
         "name": "manga",
         "desc": "fruit",
-        "image": "D:\\Projets\\py\\mobile\\morse\\assets/images/gallery_20251105_085113_982424.jpg"
+        "image": "D:\\Projets\\py\\mobile\\morse\\assets\\logo.png"
     },
     {
         "id": "0eba3d99-0759-427e-8939-ffaab240c171",
         "name": "lolo",
         "desc": "animal",
-        "image": "D:\\Projets\\py\\mobile\\morse\\assets/images/gallery_20251105_120207_287253.jpg"
+        "image": "D:\\Projets\\py\\mobile\\morse\\assets\\logo.png"
     },
     {
         "id": "d0572881-44eb-4aff-a5ac-118062c71ada",
@@ -39,30 +39,30 @@
         "id": "71ac12c7-7872-4ce9-9bad-895f60d0edde",
         "name": "Happy",
         "desc": "personnage",
-        "image": "D:\\Projets\\py\\mobile\\morse\\assets/images/gallery_20251105_091545_131879.jpg"
+        "image": "D:\\Projets\\py\\mobile\\morse\\assets\\logo.png"
     },
     {
         "id": "8ac0f479-6523-4f26-931c-ea3482b585f7",
         "name": "mer",
         "desc": "element",
-        "image": "D:\\Projets\\py\\mobile\\morse\\assets/images/gallery_20251105_092946_022967.jpeg"
+        "image": "D:\\Projets\\py\\mobile\\morse\\assets\\logo.png"
     },
     {
         "id": "225d1023-bd92-4439-8de6-fcdd4a02c44d",
         "name": "affiche",
         "desc": "poster",
-        "image": "D:\\Projets\\py\\mobile\\morse\\assets/images/gallery_20251105_092621_924119.jpeg"
+        "image": "D:\\Projets\\py\\mobile\\morse\\assets\\logo.png"
     },
     {
         "id": "dc36915c-f88d-47fa-bb48-b393e9d8d760",
         "name": "juin",
         "desc": "moi",
-        "image": "D:\\Projets\\py\\mobile\\morse\\assets/images/gallery_20251105_094903_771365.jpg"
+        "image": "D:\\Projets\\py\\mobile\\morse\\assets\\logo.png"
     },
     {
         "id": "644c3031-8d44-4fe6-8ca0-7646df8e003f",
         "name": "lune",
         "desc": "astre",
-        "image": "D:\\Projets\\py\\mobile\\morse\\assets/images/gallery_20251105_105052_108849.jpg"
+        "image": "D:\\Projets\\py\\mobile\\morse\\assets\\logo.png"
     }
 ]

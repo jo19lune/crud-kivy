@@ -227,16 +227,85 @@ class ItemController:
         return ImageManager.copy_image_to_assets(image_path)
 
     def cleanup_missing_images(self):
-        """Nettoie tous les items avec images manquantes (méthode utilitaire)"""
-        items = self.model.load_items()
-        cleaned_items = self._clean_items_with_missing_images(items)
-        print(f"Nettoyage terminé: {len(items)} -> {len(cleaned_items)} items valides")
-        self.refresh_view()
+        """
+        Nettoie tous les items avec images manquantes ET supprime les images inutilisées
+        """
+        try:
+            # Étape 1: Nettoyer les items avec images manquantes
+            items = self.model.load_items()
+            original_count = len(items)
+            
+            cleaned_items = self._clean_items_with_missing_images(items)
+            items_cleaned = original_count - len(cleaned_items)
+            
+            # Étape 2: Récupérer tous les chemins d'images utilisés
+            used_image_paths = set(self.model.get_all_image_paths())
+            
+            # Ajouter l'image par défaut pour ne pas la supprimer
+            used_image_paths.add(ImageManager.get_default_image_relative())
+            
+            print(f"Images utilisées: {used_image_paths}")
+            
+            # Étape 3: Nettoyer les images non utilisées
+            images_deleted = ImageManager.cleanup_unused_images(used_image_paths)
+            
+            # Étape 4: Sauvegarder les modifications si nécessaire
+            if items_cleaned > 0:
+                self.model.save_items(cleaned_items)
+                print(f"{items_cleaned} items nettoyés (images manquantes)")
+            
+            # Afficher un message de confirmation
+            message_parts = []
+            if items_cleaned > 0:
+                message_parts.append(f"{items_cleaned} items nettoyés")
+            if images_deleted > 0:
+                message_parts.append(f"{images_deleted} images supprimées")
+            
+            if message_parts:
+                message = "Nettoyage terminé : " + " et ".join(message_parts)
+            else:
+                message = "Aucun nettoyage nécessaire - tout est en ordre"
+            
+            if hasattr(self.view, 'show_info_dialog'):
+                self.view.show_info_dialog("Nettoyage terminé", message)
+            
+            # Rafraîchir l'affichage
+            self.refresh_view()
+            
+            return {
+                'items_cleaned': items_cleaned,
+                'images_deleted': images_deleted
+            }
+            
+        except Exception as e:
+            print(f"Erreur lors du nettoyage: {e}")
+            if hasattr(self.view, 'show_error_dialog'):
+                self.view.show_error_dialog("Erreur", "Impossible d'effectuer le nettoyage")
+            return {
+                'items_cleaned': 0,
+                'images_deleted': 0
+            }
+
+    def _clean_items_with_missing_images(self, items):
+        """
+        Nettoie les items avec images manquantes et les corrige automatiquement
+        """
+        cleaned_items = []
+        needs_save = False
         
-        # Afficher un message de confirmation
-        if hasattr(self.view, 'show_info_dialog'):
-            self.view.show_info_dialog("Nettoyage terminé", 
-                                     f"Base de données nettoyée : {len(cleaned_items)} items valides")
+        for item in items:
+            original_image = item["image"]
+            safe_image_path = ImageManager.get_safe_image_path(original_image)
+            
+            # Si l'image par défaut est utilisée (image manquante), mettre à jour l'item
+            if safe_image_path == ImageManager.get_default_image():
+                item["image"] = ImageManager.get_default_image_relative()
+                needs_save = True
+                print(f"Image manquante corrigée pour '{item['name']}': {original_image} -> {ImageManager.get_default_image_relative()}")
+            
+            cleaned_items.append(item)
+        
+        return cleaned_items
 
     def fix_image_paths(self):
         """
@@ -245,7 +314,7 @@ class ItemController:
         """
         try:
             items = self.model.load_items()
-            print(f"🔧 Correction des chemins pour {len(items)} items")
+            print(f"Correction des chemins pour {len(items)} items")
             
             # Corriger les chemins d'images
             fixed_items, changes_made = ImageManager.fix_image_paths_in_items(items)
@@ -253,7 +322,7 @@ class ItemController:
             if changes_made:
                 # Sauvegarder les corrections
                 self.model.save_items(fixed_items)
-                print("✅ Tous les chemins d'images ont été corrigés")
+                print("Tous les chemins d'images ont été corrigés")
                 
                 # Afficher un message de confirmation
                 if hasattr(self.view, 'show_info_dialog'):
@@ -264,14 +333,14 @@ class ItemController:
                 self.refresh_view()
                 return True
             else:
-                print("ℹ️ Aucun chemin d'image à corriger")
+                print("ℹAucun chemin d'image à corriger")
                 if hasattr(self.view, 'show_info_dialog'):
                     self.view.show_info_dialog("Aucun changement", 
                                              "Tous les chemins d'images sont déjà corrects")
                 return False
                 
         except Exception as e:
-            print(f"❌ Erreur lors de la correction des chemins: {e}")
+            print(f"Erreur lors de la correction des chemins: {e}")
             if hasattr(self.view, 'show_error_dialog'):
                 self.view.show_error_dialog("Erreur", "Impossible de corriger les chemins d'images")
             return False
