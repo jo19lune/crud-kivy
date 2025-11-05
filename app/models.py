@@ -1,21 +1,20 @@
 import json
 import os
 from uuid import uuid4
-import sys
 
-def get_base_dir():
-    """Retourne le chemin absolu du dossier de base du projet"""
-    if getattr(sys, 'frozen', False):
-        return os.path.dirname(sys.executable)
-    else:
-        return os.path.dirname(os.path.abspath(sys.argv[0]))
-
-def get_db_path():
-    """Retourne le chemin absolu vers la base de données"""
-    base_dir = get_base_dir()
-    return os.path.join(base_dir, "data", "database.json")
-
-DB_PATH = get_db_path()
+try:
+    from config import get_database_path
+    DB_PATH = get_database_path()
+except ImportError:
+    # Fallback
+    import sys
+    def get_database_path():
+        if getattr(sys, 'frozen', False):
+            base_dir = os.path.dirname(sys.executable)
+        else:
+            base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+        return os.path.join(base_dir, "data", "database.json")
+    DB_PATH = get_database_path()
 
 class ItemModel:
     def __init__(self):
@@ -27,7 +26,6 @@ class ItemModel:
 
     def load_items(self):
         try:
-            # Vérifier que le fichier existe avant de l'ouvrir
             if not os.path.exists(DB_PATH):
                 return []
                 
@@ -38,14 +36,12 @@ class ItemModel:
 
     def save_items(self, items):
         try:
-            # S'assurer que le dossier existe
             os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
             
             with open(DB_PATH, "w", encoding='utf-8') as f:
                 json.dump(items, f, indent=4, ensure_ascii=False)
         except Exception as e:
             print(f"Erreur lors de la sauvegarde: {e}")
-            # Recréer le fichier en cas d'erreur
             try:
                 with open(DB_PATH, "w", encoding='utf-8') as f:
                     json.dump([], f, indent=4, ensure_ascii=False)

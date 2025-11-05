@@ -1,44 +1,50 @@
 [
     {
-        "id": "e1ad8c4e-67e9-4dcb-a7fc-76915ab2ceb7",
-        "name": "cocotier",
-        "desc": "arbre",
-        "image": "assets/logo.png"
-    },
-    {
-        "id": "a60f099f-b7f2-40b8-951d-aec6588c466a",
-        "name": "eau",
-        "desc": "element",
-        "image": "assets/logo.png"
-    },
-    {
         "id": "14351319-a380-4060-8143-da0a5e2005eb",
         "name": "fraise",
         "desc": "fruit",
-        "image": "assets/logo.png"
+        "image": "../../../../Projets/py/mobile/morse/assets/logo.png"
     },
     {
         "id": "8ce38896-dbf4-450b-ab79-275b973e9e8b",
         "name": "fraise",
         "desc": "fruit",
-        "image": "assets/logo.png"
+        "image": "../../../../Projets/py/mobile/morse/assets/logo.png"
     },
     {
         "id": "80367164-4628-4359-99d3-9bb61305a978",
         "name": "focon",
         "desc": "animal",
-        "image": "assets/logo.png"
+        "image": "../../../../Projets/py/mobile/morse/assets/logo.png"
     },
     {
         "id": "5b14ddc3-3a8c-4645-b09f-02a7e4b469d3",
         "name": "cacao",
         "desc": "fruit",
-        "image": "assets/logo.png"
+        "image": "../../../../Projets/py/mobile/morse/assets/logo.png"
     },
     {
         "id": "6eba9171-fedc-49d9-b1f2-2f7a5320b7f6",
         "name": "mange",
         "desc": "fruit",
-        "image": "assets/logo.png"
+        "image": "../../../../Projets/py/mobile/morse/assets/logo.png"
+    },
+    {
+        "id": "f722287e-b234-4bef-a306-0e2bb6bf0027",
+        "name": "manga",
+        "desc": "fruit",
+        "image": "../../../../Projets/py/mobile/morse/assets/images/gallery_20251105_085113_982424.jpg"
+    },
+    {
+        "id": "0eba3d99-0759-427e-8939-ffaab240c171",
+        "name": "lolo",
+        "desc": "animal",
+        "image": "D:\\Projets\\py\\mobile\\morse\\assets\\logo.png"
+    },
+    {
+        "id": "d0572881-44eb-4aff-a5ac-118062c71ada",
+        "name": "fosa",
+        "desc": "animal",
+        "image": "D:\\Projets\\py\\mobile\\morse\\assets\\logo.png"
     }
 ]

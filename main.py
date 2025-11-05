@@ -16,7 +16,26 @@ from kivymd.uix.button import MDIconButton
 import os
 from kivy.clock import Clock
 import sys
-import json
+
+try:
+    from config import get_project_root, get_images_path, get_data_path, get_assets_path
+except ImportError:
+    # Fallback
+    import sys
+    def get_project_root():
+        if getattr(sys, 'frozen', False):
+            return os.path.dirname(sys.executable)
+        else:
+            return os.path.dirname(os.path.abspath(sys.argv[0]))
+    
+    def get_assets_path():
+        return os.path.join(get_project_root(), "assets")
+    
+    def get_images_path():
+        return os.path.join(get_project_root(), "assets", "images")
+    
+    def get_data_path():
+        return os.path.join(get_project_root(), "data")
 
 # Charger le fichier KV
 Builder.load_file("app/view.kv")
@@ -42,7 +61,7 @@ class EditDialogContent(MDBoxLayout):
             self.ids.desc_input.text = self.item["desc"]
 
 class MainScreen(Screen):
-    selected_image_path = StringProperty("assets/logo.png")
+    selected_image_path = StringProperty("")
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -51,6 +70,7 @@ class MainScreen(Screen):
         self.error_dialog = None
         self.current_edit_content = None
         self.app = None
+        self.selected_image_path = ImageManager.get_default_image()
 
     def on_enter(self):
         """Appelé quand l'écran devient actif"""
@@ -320,6 +340,9 @@ class MyApp(MDApp):
         self.theme_cls.theme_style = "Light"
         self.theme_cls.primary_palette = "Blue"
         
+        # Vérifier que les assets sont accessibles
+        self._check_assets()
+        
         # Créer le ScreenManager
         sm = ScreenManager()
         self.main_screen = MainScreen(name='main')
@@ -330,6 +353,16 @@ class MyApp(MDApp):
         self.controller = ItemController(self.main_screen)
         
         return sm
+
+    def _check_assets(self):
+        """Vérifie que les assets sont accessibles"""
+        logo_path = ImageManager.get_default_image()
+        print(f"🔍 Vérification assets: {logo_path}")
+        print(f"🔍 Logo accessible: {os.path.exists(logo_path)}")
+        
+        if not os.path.exists(logo_path):
+            print("⚠️ Logo non trouvé, création d'un logo par défaut")
+            ImageManager.ensure_assets_folder()
     
     def on_start(self):
         """Appelé quand l'application démarre"""
@@ -380,47 +413,25 @@ class MyApp(MDApp):
         return [1, 1, 1, 1]
 
 def ensure_directories():
-    def get_base_dir():
-        if getattr(sys, 'frozen', False):
-            return os.path.dirname(sys.executable)
-        else:
-            return os.path.dirname(os.path.abspath(sys.argv[0]))
+    """Crée les dossiers nécessaires dans le projet"""
+    assets_path = get_assets_path()
+    images_path = get_images_path()
+    data_path = get_data_path()
     
-    base_dir = get_base_dir()
+    print("=== CRÉATION DES DOSSIERS ===")
+    print(f"Création du dossier: {assets_path}")
+    os.makedirs(assets_path, exist_ok=True)
+    print(f"Création du dossier: {images_path}")
+    os.makedirs(images_path, exist_ok=True)
+    print(f"Création du dossier: {data_path}")
+    os.makedirs(data_path, exist_ok=True)
     
-    # Créer les dossiers dans le dossier de base du projet
-    assets_images = os.path.join(base_dir, "assets", "images")
-    data_dir = os.path.join(base_dir, "data")
-    
-    os.makedirs(assets_images, exist_ok=True)
-    os.makedirs(data_dir, exist_ok=True)
-    
-    # S'assurer que la base de données existe
-    db_path = os.path.join(data_dir, "database.json")
-    if not os.path.exists(db_path):
-        try:
-            with open(db_path, "w", encoding='utf-8') as f:
-                json.dump([], f, indent=4, ensure_ascii=False)
-            print(f"Base de données créée avec succès: {db_path}")
-        except Exception as e:
-            print(f"Erreur création base de données: {e}")
-    
-    print(f"Dossier de base: {base_dir}")
-    print(f"Dossier images: {assets_images}")
-    print(f"Dossier data: {data_dir}")
+    # Vérifier que les dossiers sont créés
+    print(f"Dossier assets existe: {os.path.exists(assets_path)}")
+    print(f"Dossier images existe: {os.path.exists(images_path)}")
+    print(f"Dossier data existe: {os.path.exists(data_path)}")
+    print("=============================")
 
 if __name__ == '__main__':
-    # Afficher le chemin de base pour débogage
-    if getattr(sys, 'frozen', False):
-        base_dir = os.path.dirname(sys.executable)
-    else:
-        base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-    
-    print(f"=== DÉBOGAGE CHEMIN DE BASE ===")
-    print(f"Base directory: {base_dir}")
-    print(f"Current working directory: {os.getcwd()}")
-    print(f"Script path: {os.path.abspath(__file__)}")
-    print("================================")
-    
     ensure_directories()
     MyApp().run()

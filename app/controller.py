@@ -1,7 +1,5 @@
 from app.models import ItemModel
 from utils.camera import ImageManager
-from kivymd.uix.dialog import MDDialog
-from kivymd.uix.button import MDFlatButton
 
 class ItemController:
     def __init__(self, view):
@@ -27,8 +25,9 @@ class ItemController:
 
     def add_item(self, name, desc, image_path):
         if name.strip():
-            # Copier l'image dans assets/images seulement lors de l'ajout
+            # Traiter le chemin de l'image
             final_image_path = self._process_image_path(image_path)
+            print(f"📍 Ajout item avec image: {final_image_path}")
             
             self.model.add_item(name, desc, final_image_path)
             self.refresh_view()
@@ -49,7 +48,7 @@ class ItemController:
 
     def update_item(self, item_id, name=None, desc=None, image_path=None):
         # Si une nouvelle image est fournie, la copier
-        if image_path and image_path != "assets/logo.png" and not image_path.startswith("assets/images/"):
+        if image_path and image_path != ImageManager.get_default_image() and not image_path.startswith("assets/images/"):
             image_path = ImageManager.copy_image_to_assets(image_path)
         
         self.model.update_item(item_id, name, desc, image_path)
@@ -106,9 +105,9 @@ class ItemController:
         """Met à jour l'item en cours d'édition"""
         if self.current_editing_item:
             # Copier l'image seulement si c'est une nouvelle image
-            if image_path and image_path != "assets/logo.png" and not image_path.startswith("assets/images/"):
+            if image_path and image_path != ImageManager.get_default_image() and not image_path.startswith("assets/images/"):
                 image_path = ImageManager.copy_image_to_assets(image_path)
-            elif not image_path or image_path == "assets/logo.png":
+            elif not image_path or image_path == ImageManager.get_default_image():
                 # Garder l'ancienne image
                 items = self.model.load_items()
                 old_item = next((item for item in items if item["id"] == self.current_editing_item), None)
@@ -126,7 +125,7 @@ class ItemController:
 
     def _process_image_path(self, image_path):
         """Traite le chemin de l'image : copie si nécessaire"""
-        if not image_path or image_path == "assets/logo.png":
+        if not image_path or image_path == ImageManager.get_default_image():
             return ImageManager.get_default_image()
         
         # Si l'image est déjà dans assets/images, la garder

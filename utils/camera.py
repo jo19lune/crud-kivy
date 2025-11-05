@@ -6,37 +6,67 @@ import shutil
 import urllib.parse
 import sys
 
-class ImageManager:
-    @staticmethod
-    def get_base_dir():
-        """Retourne le chemin absolu du dossier de base du projet"""
-        # Si on est dans un environnement frozen (exe, apk)
+# Import de la configuration
+try:
+    from config import get_images_path, get_project_root, get_assets_path
+except ImportError:
+    # Fallback si config.py n'existe pas
+    def get_project_root():
         if getattr(sys, 'frozen', False):
-            base_dir = os.path.dirname(sys.executable)
+            return os.path.dirname(sys.executable)
         else:
-            # En développement, utiliser le dossier du script principal
-            base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-        return base_dir
+            return os.path.dirname(os.path.abspath(sys.argv[0]))
+    
+    def get_assets_path():
+        return os.path.join(get_project_root(), "assets")
+    
+    def get_images_path():
+        return os.path.join(get_project_root(), "assets", "images")
 
-    @staticmethod
-    def get_assets_images_path():
-        """Retourne le chemin absolu vers assets/images"""
-        base_dir = ImageManager.get_base_dir()
-        return os.path.join(base_dir, "assets", "images")
-
+class ImageManager:
     @staticmethod
     def ensure_assets_folder():
         """Crée le dossier assets/images s'il n'existe pas"""
-        assets_path = ImageManager.get_assets_images_path()
-        os.makedirs(assets_path, exist_ok=True)
+        images_path = get_images_path()
+        os.makedirs(images_path, exist_ok=True)
+        
+        # S'assurer que logo.png existe
+        logo_path = os.path.join(get_assets_path(), "logo.png")
+        if not os.path.exists(logo_path):
+            print(f"⚠️ Logo non trouvé: {logo_path}")
+            # Créer un logo par défaut si nécessaire
+            ImageManager._create_default_logo()
+
+    @staticmethod
+    def _create_default_logo():
+        """Crée un logo par défaut si il n'existe pas"""
+        try:
+            logo_path = os.path.join(get_assets_path(), "logo.png")
+            # Créer un PNG 1x1 pixel transparent
+            png_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x00\x00\x00\x00IEND\xaeB`\x82'
+            with open(logo_path, 'wb') as f:
+                f.write(png_data)
+            print(f"✅ Logo par défaut créé: {logo_path}")
+        except Exception as e:
+            print(f"❌ Erreur création logo: {e}")
+
+    @staticmethod
+    def get_default_image():
+        """Retourne le chemin ABSOLU de l'image par défaut"""
+        logo_path = os.path.join(get_assets_path(), "logo.png")
+        print(f"📍 Chemin logo: {logo_path}")
+        print(f"📍 Logo existe: {os.path.exists(logo_path)}")
+        return logo_path
 
     @staticmethod
     def take_photo(callback=None):
         """Prend une photo avec la caméra"""
         try:
             ImageManager.ensure_assets_folder()
-            assets_path = ImageManager.get_assets_images_path()
-            photo_path = os.path.join(assets_path, f"photo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg")
+            images_path = get_images_path()
+            photo_path = os.path.join(images_path, f"photo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg")
+            
+            print(f"Tentative de prise de photo vers: {photo_path}")
             
             if platform == 'android':
                 camera.take_picture(
@@ -55,7 +85,7 @@ class ImageManager:
 
     @staticmethod
     def select_from_gallery(callback=None):
-        """Sélectionne une image depuis la galerie - retourne le chemin temporaire"""
+        """Sélectionne une image depuis la galerie"""
         try:
             def handle_selection(selection):
                 if not selection:
@@ -92,10 +122,10 @@ class ImageManager:
 
     @staticmethod
     def copy_image_to_assets(source_path):
-        """Copie l'image dans assets/images et retourne le nouveau chemin"""
+        """Copie l'image dans assets/images et retourne le nouveau chemin ABSOLU"""
         try:
             ImageManager.ensure_assets_folder()
-            assets_path = ImageManager.get_assets_images_path()
+            images_path = get_images_path()
             
             if not source_path or not os.path.exists(source_path):
                 print(f"Fichier source introuvable: {source_path}")
@@ -108,35 +138,35 @@ class ImageManager:
             
             # Générer un nom de fichier unique
             new_filename = f"gallery_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}{file_ext}"
-            new_filepath = os.path.join(assets_path, new_filename)
+            new_filepath = os.path.join(images_path, new_filename)
             
-            print(f"Tentative de copie vers: {new_filepath}")
+            print(f"=== COPIE D'IMAGE ===")
+            print(f"Source: {source_path}")
+            print(f"Destination: {new_filepath}")
             
             # Copier le fichier
             shutil.copy2(source_path, new_filepath)
             
             # Vérifier que la copie a réussi
             if os.path.exists(new_filepath):
-                print(f"Image copiée avec succès: {new_filepath}")
-                # Retourner le chemin relatif pour la base de données
-                return f"assets/images/{new_filename}"
+                print(f"✅ Image copiée avec succès: {new_filepath}")
+                return new_filepath  # Retourner le chemin ABSOLU
             else:
-                print("Échec de la copie de l'image")
+                print("❌ Échec de la copie de l'image")
                 return ImageManager.get_default_image()
                 
         except Exception as e:
-            print(f"Erreur lors de la copie de l'image: {e}")
+            print(f"❌ Erreur lors de la copie de l'image: {e}")
             return ImageManager.get_default_image()
 
     @staticmethod
     def _get_valid_path(file_path):
         """Tente d'obtenir un chemin de fichier valide"""
-        # Essayer différents formats de chemin
         paths_to_try = [
-            file_path,  # Chemin original
-            file_path.strip('"\' '),  # Sans guillemets
-            urllib.parse.unquote(file_path),  # URL décodée
-            os.path.abspath(file_path),  # Chemin absolu
+            file_path,
+            file_path.strip('"\' '),
+            urllib.parse.unquote(file_path),
+            os.path.abspath(file_path),
         ]
         
         for path in paths_to_try:
@@ -148,24 +178,15 @@ class ImageManager:
         return None
 
     @staticmethod
-    def get_default_image():
-        """Retourne le chemin de l'image par défaut"""
-        return "assets/logo.png"
-
-    @staticmethod
     def is_valid_image_path(path):
         """Vérifie si le chemin d'image est valide"""
         if not path:
             return False
             
-        # Essayer le chemin absolu
-        base_dir = ImageManager.get_base_dir()
-        absolute_path = os.path.join(base_dir, path)
-        
-        if os.path.exists(absolute_path):
+        # Vérifier si le chemin existe
+        if os.path.exists(path):
             valid_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'}
-            file_ext = os.path.splitext(absolute_path)[1].lower()
+            file_ext = os.path.splitext(path)[1].lower()
             return file_ext in valid_extensions
         
         return False
-
