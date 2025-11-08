@@ -1,7 +1,7 @@
 from kivymd.app import MDApp
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.properties import StringProperty
+from kivy.properties import StringProperty, ObjectProperty
 from app.controller import ItemController
 from utils.camera import ImageManager
 from kivymd.uix.dialog import MDDialog
@@ -22,7 +22,7 @@ import sys
 try:
     from config import get_project_root, get_images_path, get_data_path, get_assets_path
 except ImportError:
-    # Fallback
+    # Fallback pour le développement
     import sys
     def get_project_root():
         if getattr(sys, 'frozen', False):
@@ -399,10 +399,16 @@ class MyApp(MDApp):
         self.controller = None
         self.main_screen = None
         self.sort_menu = None
+        self.app_icon = "assets/icon.png"  # Chemin vers l'icône de l'application
     
     def build(self):
         self.theme_cls.theme_style = "Light"
         self.theme_cls.primary_palette = "Blue"
+        
+        self.title = "CRUD Mobile"
+        
+        # Définir l'icône de l'application
+        self.set_application_icon()
         
         # Vérifier que les assets sont accessibles
         self._check_assets()
@@ -420,6 +426,53 @@ class MyApp(MDApp):
         self._create_sort_menu()
         
         return sm
+
+    def set_application_icon(self):
+        """Définit l'icône de l'application"""
+        try:
+            icon_path = self.get_application_icon_path()
+            if os.path.exists(icon_path):
+                self.icon = icon_path
+                print(f"Icône de l'application définie: {icon_path}")
+            else:
+                print(f"Attention: Icône non trouvée à {icon_path}")
+                # Créer une icône par défaut si nécessaire
+                self._create_default_icon()
+        except Exception as e:
+            print(f"Erreur lors du chargement de l'icône: {e}")
+
+    def get_application_icon_path(self):
+        """Retourne le chemin vers l'icône de l'application"""
+        # Essayer différents chemins possibles
+        possible_paths = [
+            "assets/icon.png",
+            "./assets/icon.png",
+            os.path.join(get_assets_path(), "icon.png"),
+            "icon.png"
+        ]
+        
+        for path in possible_paths:
+            if os.path.exists(path):
+                return path
+        
+        # Si aucune icône n'est trouvée, retourner le premier chemin
+        return "assets/icon.png"
+
+    def _create_default_icon(self):
+        """Crée une icône par défaut si elle n'existe pas"""
+        try:
+            assets_dir = get_assets_path()
+            os.makedirs(assets_dir, exist_ok=True)
+            
+            icon_path = os.path.join(assets_dir, "icon.png")
+            
+            # Vous pourriez créer une icône programmatiquement ici
+            # Pour l'instant, on se contente de logger l'information
+            print(f"Icône par défaut à créer: {icon_path}")
+            print("Veuillez ajouter un fichier icon.png dans le dossier assets/")
+            
+        except Exception as e:
+            print(f"Erreur création icône par défaut: {e}")
 
     def _create_sort_menu(self):
         """Crée le menu déroulant pour le tri"""
@@ -458,18 +511,27 @@ class MyApp(MDApp):
 
     def _check_assets(self):
         """Vérifie que les assets sont accessibles"""
+        # Vérifier l'icône
+        icon_path = self.get_application_icon_path()
+        print(f"Vérification icône: {icon_path}")
+        print(f"Icône accessible: {os.path.exists(icon_path)}")
+        
+        # Vérifier le logo par défaut
         logo_path = ImageManager.get_default_image()
-        # print(f"Vérification assets: {logo_path}")
-        # print(f"Logo accessible: {os.path.exists(logo_path)}")
+        print(f"Vérification logo: {logo_path}")
+        print(f"Logo accessible: {os.path.exists(logo_path)}")
         
         if not os.path.exists(logo_path):
-            # print("Logo non trouvé, création d'un logo par défaut")
+            print("Logo non trouvé, création d'un logo par défaut")
             ImageManager.ensure_assets_folder()
     
     def on_start(self):
         """Appelé quand l'application démarre"""
         # Rafraîchir la vue après que l'interface soit complètement chargée
         Clock.schedule_once(lambda dt: self.controller.refresh_view(), 0.5)
+        
+        # Afficher les informations sur l'icône
+        print(f"Application démarrée avec l'icône: {self.icon}")
     
     def show_image_dialog(self):
         """Affiche la boîte de dialogue pour choisir une image (pour nouvel item)"""
@@ -532,6 +594,15 @@ def ensure_directories():
     print(f"Dossier assets existe: {os.path.exists(assets_path)}")
     print(f"Dossier images existe: {os.path.exists(images_path)}")
     print(f"Dossier data existe: {os.path.exists(data_path)}")
+    
+    # Vérifier l'icône
+    icon_path = os.path.join(assets_path, "icon.png")
+    if not os.path.exists(icon_path):
+        print("ATTENTION: assets/icon.png n'existe pas!")
+        print("Veuillez ajouter votre icône dans le dossier assets/")
+    else:
+        print(f"Icône trouvée: {icon_path}")
+    
     print("=============================")
 
 if __name__ == '__main__':
